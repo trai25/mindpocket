@@ -94,8 +94,7 @@ export async function POST(req: Request) {
                 parameters: z.object({
                   question: z.string().describe("用于搜索知识库的查询语句"),
                 }),
-                execute: async (input: { question: string }) =>
-                  findRelevantContent(userId, input.question),
+                execute: async ({ question }) => findRelevantContent(userId, question),
               }),
             }
           : undefined,

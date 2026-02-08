@@ -87,7 +87,7 @@ export function Chat({
   return (
     <div className="flex h-full flex-col">
       {isEmpty ? (
-        <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-start pt-40">
           <div className="animate-in fade-in slide-in-from-bottom-4 w-full max-w-2xl duration-500">
             <div className="mb-6 text-center">
               <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text font-bold text-3xl text-transparent">

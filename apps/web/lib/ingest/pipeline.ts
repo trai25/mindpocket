@@ -74,22 +74,23 @@ export async function ingestFromUrl(params: IngestUrlParams): Promise<IngestResu
     url,
     sourceType: "url",
     platform: inferPlatform(url),
-    ingestStatus: "processing" as IngestStatus,
+    ingestStatus: "pending" as IngestStatus,
   })
 
+  // 触发后台处理，不 await
+  processIngestUrl(bookmarkId, url, userTitle).catch(console.error)
+
+  return { bookmarkId, title: userTitle || url, markdown: null, type, status: "pending" }
+}
+
+async function processIngestUrl(bookmarkId: string, url: string, userTitle?: string) {
+  await updateBookmarkStatus(bookmarkId, "processing")
   try {
     const result = await convertUrl(url)
 
     if (!result?.markdown) {
       await updateBookmarkStatus(bookmarkId, "failed", "Conversion returned empty result")
-      return {
-        bookmarkId,
-        title: userTitle || url,
-        markdown: null,
-        type,
-        status: "failed",
-        error: "Conversion returned empty result",
-      }
+      return
     }
 
     const finalTitle = userTitle || result.title || url
@@ -101,19 +102,9 @@ export async function ingestFromUrl(params: IngestUrlParams): Promise<IngestResu
       .where(eq(bookmark.id, bookmarkId))
 
     generateAndStoreEmbeddings(bookmarkId, result.markdown).catch(console.error)
-
-    return { bookmarkId, title: finalTitle, markdown: result.markdown, type, status: "completed" }
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error"
     await updateBookmarkStatus(bookmarkId, "failed", errMsg)
-    return {
-      bookmarkId,
-      title: userTitle || url,
-      markdown: null,
-      type,
-      status: "failed",
-      error: errMsg,
-    }
   }
 }
 
@@ -134,37 +125,44 @@ export async function ingestFromFile(params: IngestFileParams): Promise<IngestRe
     sourceType: "file",
     fileExtension,
     fileSize: file.size,
-    ingestStatus: "processing" as IngestStatus,
+    ingestStatus: "pending" as IngestStatus,
   })
 
+  // 先读取 file 到 buffer 并上传 blob（需要在请求生命周期内完成）
+  const fileBuffer = await file.arrayBuffer()
+  const blobResult = await put(`ingest/${bookmarkId}/${fileName}`, fileBuffer, {
+    access: "public",
+  })
+
+  await db
+    .update(bookmark)
+    .set({ fileUrl: blobResult.url, url: blobResult.url })
+    .where(eq(bookmark.id, bookmarkId))
+
+  // 触发后台处理，不 await
+  const buffer = Buffer.from(fileBuffer)
+  processIngestFile(bookmarkId, buffer, fileExtension, userTitle, fileName).catch(console.error)
+
+  return { bookmarkId, title: userTitle || fileName, markdown: null, type, status: "pending" }
+}
+
+async function processIngestFile(
+  bookmarkId: string,
+  buffer: Buffer,
+  fileExtension: string,
+  userTitle?: string,
+  fileName?: string
+) {
+  await updateBookmarkStatus(bookmarkId, "processing")
   try {
-    const fileBuffer = await file.arrayBuffer()
-
-    const blobResult = await put(`ingest/${bookmarkId}/${fileName}`, fileBuffer, {
-      access: "public",
-    })
-
-    await db
-      .update(bookmark)
-      .set({ fileUrl: blobResult.url, url: blobResult.url })
-      .where(eq(bookmark.id, bookmarkId))
-
-    const buffer = Buffer.from(fileBuffer)
     const result = await convertBuffer(buffer, fileExtension)
 
     if (!result?.markdown) {
       await updateBookmarkStatus(bookmarkId, "failed", "Conversion returned empty result")
-      return {
-        bookmarkId,
-        title: userTitle || fileName,
-        markdown: null,
-        type,
-        status: "failed",
-        error: "Conversion returned empty result",
-      }
+      return
     }
 
-    const finalTitle = userTitle || result.title || fileName
+    const finalTitle = userTitle || result.title || fileName || "Untitled"
     const description = extractDescription(result.markdown)
 
     await db
@@ -173,19 +171,9 @@ export async function ingestFromFile(params: IngestFileParams): Promise<IngestRe
       .where(eq(bookmark.id, bookmarkId))
 
     generateAndStoreEmbeddings(bookmarkId, result.markdown).catch(console.error)
-
-    return { bookmarkId, title: finalTitle, markdown: result.markdown, type, status: "completed" }
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error"
     await updateBookmarkStatus(bookmarkId, "failed", errMsg)
-    return {
-      bookmarkId,
-      title: userTitle || fileName,
-      markdown: null,
-      type,
-      status: "failed",
-      error: errMsg,
-    }
   }
 }
 
@@ -202,22 +190,28 @@ export async function ingestFromExtension(params: IngestExtensionParams): Promis
     url,
     sourceType: "extension",
     platform: inferPlatform(url),
-    ingestStatus: "processing" as IngestStatus,
+    ingestStatus: "pending" as IngestStatus,
   })
 
+  // 触发后台处理，不 await
+  processIngestExtension(bookmarkId, html, url, userTitle).catch(console.error)
+
+  return { bookmarkId, title: userTitle || url, markdown: null, type: "article", status: "pending" }
+}
+
+async function processIngestExtension(
+  bookmarkId: string,
+  html: string,
+  url: string,
+  userTitle?: string
+) {
+  await updateBookmarkStatus(bookmarkId, "processing")
   try {
     const result = await convertHtml(html, url)
 
     if (!result?.markdown) {
       await updateBookmarkStatus(bookmarkId, "failed", "HTML conversion returned empty result")
-      return {
-        bookmarkId,
-        title: userTitle || url,
-        markdown: null,
-        type: "article",
-        status: "failed",
-        error: "HTML conversion returned empty result",
-      }
+      return
     }
 
     const finalTitle = userTitle || result.title || url
@@ -229,24 +223,8 @@ export async function ingestFromExtension(params: IngestExtensionParams): Promis
       .where(eq(bookmark.id, bookmarkId))
 
     generateAndStoreEmbeddings(bookmarkId, result.markdown).catch(console.error)
-
-    return {
-      bookmarkId,
-      title: finalTitle,
-      markdown: result.markdown,
-      type: "article",
-      status: "completed",
-    }
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error"
     await updateBookmarkStatus(bookmarkId, "failed", errMsg)
-    return {
-      bookmarkId,
-      title: userTitle || url,
-      markdown: null,
-      type: "article",
-      status: "failed",
-      error: errMsg,
-    }
   }
 }

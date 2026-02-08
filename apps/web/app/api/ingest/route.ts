@@ -4,8 +4,6 @@ import { auth } from "@/lib/auth"
 import { ingestFromExtension, ingestFromFile, ingestFromUrl } from "@/lib/ingest/pipeline"
 import { ingestExtensionSchema, ingestUrlSchema } from "@/lib/ingest/types"
 
-export const maxDuration = 120
-
 const ALLOWED_EXTENSIONS = [
   ".pdf",
   ".docx",
@@ -69,7 +67,7 @@ async function handleJsonIngest(request: Request, userId: string) {
       folderId: parsed.data.folderId,
       title: parsed.data.title,
     })
-    return NextResponse.json(result, { status: result.status === "failed" ? 422 : 201 })
+    return NextResponse.json(result, { status: 201 })
   }
 
   const parsed = ingestUrlSchema.safeParse(body)
@@ -85,7 +83,7 @@ async function handleJsonIngest(request: Request, userId: string) {
     folderId: parsed.data.folderId,
     title: parsed.data.title,
   })
-  return NextResponse.json(result, { status: result.status === "failed" ? 422 : 201 })
+  return NextResponse.json(result, { status: 201 })
 }
 
 async function handleFileUpload(request: Request, userId: string) {
@@ -114,5 +112,5 @@ async function handleFileUpload(request: Request, userId: string) {
     title: title ?? undefined,
   })
 
-  return NextResponse.json(result, { status: result.status === "failed" ? 422 : 201 })
+  return NextResponse.json(result, { status: 201 })
 }

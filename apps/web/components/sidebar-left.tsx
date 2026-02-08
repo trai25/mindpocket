@@ -4,6 +4,7 @@ import {
   Bookmark,
   Brain,
   Github,
+  Import,
   LayoutDashboard,
   Loader2,
   MessageSquare,
@@ -290,6 +291,14 @@ export function SidebarLeft({ ...props }: React.ComponentProps<typeof Sidebar>) 
               <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>{t.sidebar.dashboard}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === "/ingest"}>
+              <Link href="/ingest">
+                <Import />
+                <span>{t.sidebar.import}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

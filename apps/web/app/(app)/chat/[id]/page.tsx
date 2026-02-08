@@ -1,3 +1,4 @@
+import type { UIMessage } from "ai"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { getChatById, getMessagesByChatId } from "@/db/queries/chat"
@@ -22,7 +23,7 @@ export default async function ChatIdPage({ params }: { params: Promise<{ id: str
   const initialMessages = dbMessages.map((msg) => ({
     id: msg.id,
     role: msg.role as "user" | "assistant",
-    parts: msg.parts as Array<{ type: string; text?: string; reasoning?: string }>,
+    parts: msg.parts as UIMessage["parts"],
     createdAt: msg.createdAt,
   }))
 

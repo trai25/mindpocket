@@ -128,7 +128,7 @@ export function GlobalSearchDialog() {
       titleId="global-search-dialog-title"
     >
       <Command className="bg-transparent" shouldFilter={false}>
-        <div className="border-b border-border/60">
+        <div className="flex items-center gap-2 border-b border-border/60 pr-10 **:data-[slot=command-input-wrapper]:flex-1 **:data-[slot=command-input-wrapper]:border-none">
           <CommandInput
             onValueChange={(nextValue) => {
               if (nextValue.startsWith("/k ")) {
@@ -151,25 +151,21 @@ export function GlobalSearchDialog() {
             placeholder={t.searchDialog.placeholder}
             value={input}
           />
-
-          <div className="flex items-center justify-between gap-3 px-3 pb-3">
-            <div className="inline-flex rounded-lg border border-border/70 bg-muted/40 p-1">
-              {SEARCH_MODES.map((itemMode) => (
-                <button
-                  className={
-                    itemMode === mode
-                      ? "rounded-md bg-background px-3 py-1.5 font-medium text-xs shadow-sm"
-                      : "rounded-md px-3 py-1.5 text-muted-foreground text-xs transition hover:text-foreground"
-                  }
-                  key={itemMode}
-                  onClick={() => setMode(itemMode)}
-                  type="button"
-                >
-                  {modeLabels[itemMode]}
-                </button>
-              ))}
-            </div>
-            <p className="text-muted-foreground text-xs">{t.searchDialog.shortcutHint}</p>
+          <div className="inline-flex shrink-0 rounded-lg border border-border/70 bg-muted/40 p-0.5">
+            {SEARCH_MODES.map((itemMode) => (
+              <button
+                className={
+                  itemMode === mode
+                    ? "rounded-md bg-background px-2.5 py-1 font-medium text-xs shadow-sm"
+                    : "rounded-md px-2.5 py-1 text-muted-foreground text-xs transition hover:text-foreground"
+                }
+                key={itemMode}
+                onClick={() => setMode(itemMode)}
+                type="button"
+              >
+                {modeLabels[itemMode]}
+              </button>
+            ))}
           </div>
         </div>
 

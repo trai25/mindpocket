@@ -38,9 +38,9 @@ interface BookmarkDetail {
   platform: string | null
   author: string | null
   language: string | null
-  sourceCreatedAt: string | null
-  createdAt: string
-  updatedAt: string
+  sourceCreatedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
   folderId: string | null
   folderName: string | null
   folderEmoji: string | null

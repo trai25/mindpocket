@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react"
-import { getSession, signIn } from "../../lib/api"
+import { authClient, removeToken } from "../../lib/auth-client"
 import "./App.css"
 
-type User = { id: string; name: string; email: string }
+interface User {
+  id: string
+  name: string
+  email: string
+}
 type Status = "idle" | "loading" | "success" | "error"
 
 function App() {
@@ -10,12 +14,19 @@ function App() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    getSession().then((res) => {
-      if (res.ok && res.data?.user) {
-        setUser(res.data.user)
-      }
-      setChecking(false)
-    })
+    authClient
+      .getSession()
+      .then((res) => {
+        console.log("[MindPocket] getSession:", res)
+        if (res.data?.user) {
+          setUser(res.data.user as User)
+        }
+        setChecking(false)
+      })
+      .catch((err) => {
+        console.error("[MindPocket] getSession error:", err)
+        setChecking(false)
+      })
   }, [])
 
   if (checking) {
@@ -30,7 +41,7 @@ function App() {
     return <LoginForm onLogin={setUser} />
   }
 
-  return <SavePage user={user} onLogout={() => setUser(null)} />
+  return <SavePage onLogout={() => setUser(null)} user={user} />
 }
 
 function LoginForm({ onLogin }: { onLogin: (user: User) => void }) {
@@ -44,13 +55,14 @@ function LoginForm({ onLogin }: { onLogin: (user: User) => void }) {
     setStatus("loading")
     setError("")
 
-    const res = await signIn(email, password)
-    if (res.ok && res.data?.user) {
+    const res = await authClient.signIn.email({ email, password })
+    console.log("[MindPocket] signIn:", res)
+    if (res.data?.user) {
       setStatus("success")
-      onLogin(res.data.user)
+      onLogin(res.data.user as User)
     } else {
       setStatus("error")
-      setError("登录失败，请检查邮箱和密码")
+      setError(res.error?.message || "登录失败，请检查邮箱和密码")
     }
   }
 
@@ -60,21 +72,21 @@ function LoginForm({ onLogin }: { onLogin: (user: User) => void }) {
       <form className="form" onSubmit={handleSubmit}>
         <input
           className="input"
-          type="email"
-          placeholder="邮箱"
-          value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="邮箱"
           required
+          type="email"
+          value={email}
         />
         <input
           className="input"
-          type="password"
-          placeholder="密码"
-          value={password}
           onChange={(e) => setPassword(e.target.value)}
+          placeholder="密码"
           required
+          type="password"
+          value={password}
         />
-        <button className="btn btn-primary" type="submit" disabled={status === "loading"}>
+        <button className="btn btn-primary" disabled={status === "loading"} type="submit">
           {status === "loading" ? "登录中..." : "登录"}
         </button>
         {error && <p className="error">{error}</p>}
@@ -105,15 +117,23 @@ function SavePage({ user, onLogout }: { user: User; onLogout: () => void }) {
     <div className="app">
       <div className="header">
         <h1>MindPocket</h1>
-        <button className="logout-btn" onClick={onLogout} type="button">
+        <button
+          className="logout-btn"
+          onClick={async () => {
+            await authClient.signOut()
+            await removeToken()
+            onLogout()
+          }}
+          type="button"
+        >
           退出
         </button>
       </div>
       <p className="user-info">{user.email}</p>
       <button
         className="btn btn-save"
-        onClick={handleSave}
         disabled={status === "loading"}
+        onClick={handleSave}
         type="button"
       >
         {status === "loading" ? "保存中..." : "收藏此页面"}
