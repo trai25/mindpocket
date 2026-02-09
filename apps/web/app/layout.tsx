@@ -1,7 +1,13 @@
 import "@/styles/global.css"
+import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { LocaleProvider } from "@/lib/i18n"
+
+export const metadata: Metadata = {
+  title: "MindPocket",
+  description: "Your personal knowledge management assistant",
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
