@@ -6,7 +6,8 @@ import { bearer } from "better-auth/plugins/bearer"
 import { db } from "@/db/client"
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000",
+  baseURL:
+    process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000",
   trustedOrigins: [
     process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000",
     "chrome-extension://*",
