@@ -8,10 +8,33 @@ export interface ConvertResult {
   markdown: string
 }
 
+/** 不需要浏览器渲染的平台，可直接从 URL 解析 */
+const BROWSER_FREE_PLATFORMS = new Set(["bilibili"])
+
+export function needsBrowser(platform: string | null): boolean {
+  if (!platform) {
+    return false
+  }
+  return !BROWSER_FREE_PLATFORMS.has(platform)
+}
+
 /**
- * 根据平台选择不同的转换策略
- * - 特定平台使用自定义处理器
- * - 其他平台使用通用 MarkItDown 转换
+ * 不需要 HTML 的平台转换（直接从 URL 解析）
+ */
+export async function convertWithoutHtml(
+  url: string,
+  platform: string
+): Promise<ConvertResult | null> {
+  switch (platform) {
+    case "bilibili":
+      return await convertBilibili(url)
+    default:
+      return null
+  }
+}
+
+/**
+ * 需要 HTML 的平台转换
  */
 export async function convertWithPlatform(
   html: string,
@@ -19,8 +42,6 @@ export async function convertWithPlatform(
   platform: string | null
 ): Promise<ConvertResult | null> {
   switch (platform) {
-    case "bilibili":
-      return await convertBilibili(html, url)
     case "wechat":
       return await convertWechat(html, url)
     case "xiaohongshu":

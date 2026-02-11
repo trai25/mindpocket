@@ -12,7 +12,7 @@ import {
   inferTypeFromExtension,
   inferTypeFromUrl,
 } from "./converter"
-import { convertWithPlatform } from "./platforms"
+import { convertWithoutHtml, convertWithPlatform, needsBrowser } from "./platforms"
 import type { IngestResult, IngestStatus } from "./types"
 import { inferPlatform } from "./types"
 
@@ -94,11 +94,16 @@ async function processIngestUrl(bookmarkId: string, url: string, userTitle?: str
     let result: { title: string | null; markdown: string } | null = null
 
     if (platform) {
-      // 平台专用解析：先用浏览器获取完整 HTML，再交给平台解析器
-      const { fetchWithBrowser } = await import("./browser")
-      const html = await fetchWithBrowser(url)
-      if (html) {
-        result = await convertWithPlatform(html, url, platform)
+      if (needsBrowser(platform)) {
+        // 需要浏览器渲染的平台
+        const { fetchWithBrowser } = await import("./browser")
+        const html = await fetchWithBrowser(url)
+        if (html) {
+          result = await convertWithPlatform(html, url, platform)
+        }
+      } else {
+        // 不需要浏览器的平台，直接从 URL 解析
+        result = await convertWithoutHtml(url, platform)
       }
     }
 
