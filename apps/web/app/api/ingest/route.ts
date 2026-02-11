@@ -4,8 +4,9 @@ import { auth } from "@/lib/auth"
 import { ingestFromExtension, ingestFromFile, ingestFromUrl } from "@/lib/ingest/pipeline"
 import { ingestExtensionSchema, ingestUrlSchema } from "@/lib/ingest/types"
 
+// 目前不支持 pdf 解析
 const ALLOWED_EXTENSIONS = [
-  ".pdf",
+  // ".pdf",
   ".docx",
   ".doc",
   ".xlsx",
