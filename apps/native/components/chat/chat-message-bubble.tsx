@@ -25,9 +25,21 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
             case "reasoning":
               return (
                 <Text key={`${message.id}-${i}`} style={styles.reasoning}>
-                  {part.reasoning}
+                  {part.text}
                 </Text>
               )
+            case "tool-getInformation": {
+              const output = part.output as unknown[] | undefined
+              return (
+                <View key={`${message.id}-${i}`} style={styles.toolCard}>
+                  <Text style={styles.toolLabel}>
+                    {part.state === "output-available"
+                      ? `📚 已检索 ${output?.length || 0} 条相关内容`
+                      : "🔍 正在搜索知识库..."}
+                  </Text>
+                </View>
+              )
+            }
             default:
               return null
           }
@@ -76,5 +88,16 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 16,
     color: "#a3a3a3",
+  },
+  toolCard: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  toolLabel: {
+    fontSize: 12,
+    color: "#737373",
   },
 })
