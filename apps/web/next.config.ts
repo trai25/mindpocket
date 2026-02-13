@@ -1,7 +1,7 @@
 module.exports = {
   reactStrictMode: true,
   allowedDevOrigins: ["127.0.0.1", "localhost"],
-  serverExternalPackages: ["@sparticuz/chromium-min"],
+  serverExternalPackages: ["@sparticuz/chromium-min", "@napi-rs/canvas", "pdfjs-dist", "pdf-parse"],
   turbopack: {
     resolveAlias: {
       "react-native": "react-native-web",

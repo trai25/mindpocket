@@ -1,3 +1,4 @@
+import "pdf-parse/worker"
 import type { MarkItDown } from "markitdown-ts"
 import type { BookmarkType } from "./types"
 import { EXTENSION_TYPE_MAP, URL_TYPE_PATTERNS } from "./types"
