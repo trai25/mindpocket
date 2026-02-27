@@ -10,8 +10,8 @@ export default function ChatPage() {
   const id = useMemo(() => nanoid(), [])
 
   return (
-    <SidebarInset className="flex h-dvh flex-col overflow-hidden">
-      <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background">
+    <SidebarInset className="flex min-w-0 flex-col overflow-hidden">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 bg-background">
         <div className="flex flex-1 items-center gap-2 px-3">
           <SidebarTrigger />
           <Separator className="mr-2 data-[orientation=vertical]:h-4" orientation="vertical" />

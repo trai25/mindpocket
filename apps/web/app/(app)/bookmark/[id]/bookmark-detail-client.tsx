@@ -83,7 +83,7 @@ export function BookmarkDetailClient({ bookmark }: { bookmark: BookmarkDetail })
   }, [bookmark.id, content])
 
   return (
-    <SidebarInset className="flex h-dvh flex-col overflow-hidden">
+    <SidebarInset className="flex min-w-0 flex-col overflow-hidden">
       <div className="flex h-full flex-col">
         <Header
           bookmark={bookmark}

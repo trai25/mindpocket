@@ -141,7 +141,7 @@ export default function IngestPage() {
   }, [fetchHistory, statusFilter])
 
   return (
-    <SidebarInset className="min-w-0">
+    <SidebarInset className="flex min-w-0 flex-col overflow-hidden">
       <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 bg-background">
         <div className="flex flex-1 items-center gap-2 px-3">
           <SidebarTrigger />
@@ -155,7 +155,7 @@ export default function IngestPage() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex min-w-0 flex-1 flex-col gap-6 p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
         <IngestForm folders={folders} onSuccess={handleIngestSuccess} t={t} />
         <Separator />
         <IngestHistory

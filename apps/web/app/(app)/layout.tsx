@@ -1,15 +1,16 @@
-"use client"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { AppShell } from "./shell"
 
-import { GlobalSearchDialog } from "@/components/search/global-search-dialog"
-import { SidebarLeft } from "@/components/sidebar-left"
-import { SidebarProvider } from "@/components/ui/sidebar"
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider>
-      <SidebarLeft />
-      {children}
-      <GlobalSearchDialog />
-    </SidebarProvider>
-  )
+  if (!session?.user) {
+    redirect("/login")
+  }
+
+  return <AppShell>{children}</AppShell>
 }
