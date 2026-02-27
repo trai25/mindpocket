@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { db } from "@/db/client"
 import { getBookmarkById, getBookmarkTags } from "@/db/queries/bookmark"
 import { bookmark } from "@/db/schema/bookmark"
+import { folder } from "@/db/schema/folder"
 import { auth } from "@/lib/auth"
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -49,7 +50,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     updates.description = description
   }
   if (folderId !== undefined) {
-    updates.folderId = folderId
+    if (folderId === null) {
+      updates.folderId = null
+    } else if (typeof folderId === "string" && folderId.trim()) {
+      const [targetFolder] = await db
+        .select({ id: folder.id })
+        .from(folder)
+        .where(and(eq(folder.id, folderId.trim()), eq(folder.userId, session.user.id)))
+        .limit(1)
+
+      if (!targetFolder) {
+        return NextResponse.json({ error: "Invalid folder" }, { status: 400 })
+      }
+
+      updates.folderId = folderId.trim()
+    } else {
+      return NextResponse.json({ error: "Invalid folderId" }, { status: 400 })
+    }
   }
 
   if (Object.keys(updates).length === 0) {

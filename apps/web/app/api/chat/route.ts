@@ -1,17 +1,7 @@
-import {
-  convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  generateId,
-  stepCountIs,
-  streamText,
-  tool,
-  type UIMessage,
-} from "ai"
+import { createAgentUIStreamResponse, generateId, type UIMessage } from "ai"
 import { headers } from "next/headers"
 import { after } from "next/server"
 import { createResumableStreamContext } from "resumable-stream"
-import { z } from "zod"
 import { getDefaultProvider, getProviderWithDecryptedKey } from "@/db/queries/ai-provider"
 import {
   clearActiveStreamId,
@@ -23,7 +13,7 @@ import {
   saveMessages,
   updateChatTitle,
 } from "@/db/queries/chat"
-import { findRelevantContent } from "@/lib/ai/embedding"
+import { createChatAgent } from "@/lib/ai/agents/chat-agent"
 import { generateTitleFromUserMessage, systemPrompt } from "@/lib/ai/prompts"
 import { getChatModel } from "@/lib/ai/provider"
 import { auth } from "@/lib/auth"
@@ -92,11 +82,13 @@ export async function POST(req: Request) {
     messages,
     selectedChatModel,
     useKnowledgeBase = true,
+    useFolderTools = true,
   }: {
     id: string
     messages: UIMessage[]
     selectedChatModel?: string
     useKnowledgeBase?: boolean
+    useFolderTools?: boolean
   } = await req.json()
 
   const userId = session.user.id
@@ -138,66 +130,62 @@ export async function POST(req: Request) {
   })
 
   const model = getChatModel(config)
-
-  const stream = createUIMessageStream({
-    execute: async ({ writer }) => {
-      const result = streamText({
-        model,
-        system: systemPrompt,
-        messages: await convertToModelMessages(messages),
-        tools: useKnowledgeBase
-          ? {
-              getInformation: tool({
-                description:
-                  "从用户的书签知识库中检索相关信息来回答问题。当用户提问时，优先使用此工具搜索知识库。",
-                inputSchema: z.object({
-                  question: z.string().describe("用于搜索知识库的查询语句"),
-                }),
-                execute: async ({ question }) => findRelevantContent(userId, question),
-              }),
-            }
-          : undefined,
-        stopWhen: stepCountIs(useKnowledgeBase ? 3 : 1),
-        onFinish: async ({ response }) => {
-          const assistantMessages = response.messages.filter((m) => m.role === "assistant")
-          if (assistantMessages.length > 0) {
-            const lastMsg = assistantMessages.at(-1)!
-            await saveMessages({
-              messages: [
-                {
-                  id: generateId(),
-                  chatId: id,
-                  role: "assistant",
-                  parts: lastMsg.content,
-                  createdAt: new Date(),
-                },
-              ],
-            })
-          }
-
-          await clearActiveStreamId({ chatId: id })
-        },
-      })
-
-      result.consumeStream()
-
-      writer.merge(result.toUIMessageStream({ sendReasoning: true }))
-
-      if (isNewChat) {
-        const textPart = userMessage.parts.find((p) => p.type === "text")
-        if (textPart && "text" in textPart) {
-          generateTitleFromUserMessage({ message: textPart.text, model }).then(async (title) => {
-            await updateChatTitle({ chatId: id, title })
+  const agent = createChatAgent({
+    model,
+    systemPrompt,
+    userId,
+    useKnowledgeBase,
+    useFolderTools,
+    onFinish: async ({ response }) => {
+      try {
+        const assistantMessages = response.messages.filter(
+          (message) => message.role === "assistant"
+        )
+        if (assistantMessages.length > 0) {
+          const lastMessage = assistantMessages.at(-1)!
+          await saveMessages({
+            messages: [
+              {
+                id: generateId(),
+                chatId: id,
+                role: "assistant",
+                parts: lastMessage.content,
+                createdAt: new Date(),
+              },
+            ],
           })
         }
+
+        if (isNewChat) {
+          const textPart = userMessage.parts.find((part) => part.type === "text")
+          if (textPart && "text" in textPart) {
+            generateTitleFromUserMessage({ message: textPart.text, model }).then(async (title) => {
+              await updateChatTitle({ chatId: id, title })
+            })
+          }
+        }
+      } finally {
+        await clearActiveStreamId({ chatId: id })
+      }
+    },
+    onStepFinish: (step) => {
+      if (step.toolCalls.length > 0) {
+        const toolNames = step.toolCalls.map((call) => call.toolName).join(",")
+        console.info("[chat-agent] tools", {
+          chatId: id,
+          toolNames,
+          stepUsage: step.usage.totalTokens,
+        })
       }
     },
   })
 
   return withCors(
     req,
-    createUIMessageStreamResponse({
-      stream,
+    await createAgentUIStreamResponse({
+      agent,
+      uiMessages: messages,
+      sendReasoning: true,
       async consumeSseStream({ stream: sseStream }) {
         if (!process.env.REDIS_URL) {
           return

@@ -35,14 +35,22 @@ export function Chat({
 }) {
   const t = useT()
   const [input, setInput] = useState("")
-  const { selectedModelId, useKnowledgeBase, setSelectedModelId, setUseKnowledgeBase } =
-    useChatStore()
+  const {
+    selectedModelId,
+    useKnowledgeBase,
+    useFolderTools,
+    setSelectedModelId,
+    setUseKnowledgeBase,
+    setUseFolderTools,
+  } = useChatStore()
   const hasReplacedUrl = useRef(false)
   const greeting = useMemo(() => getGreeting(), [])
   const selectedModelIdRef = useRef(selectedModelId)
   selectedModelIdRef.current = selectedModelId
   const useKnowledgeBaseRef = useRef(useKnowledgeBase)
   useKnowledgeBaseRef.current = useKnowledgeBase
+  const useFolderToolsRef = useRef(useFolderTools)
+  useFolderToolsRef.current = useFolderTools
 
   // Fetch user's default chat model on mount (only if not already set)
   useEffect(() => {
@@ -71,6 +79,7 @@ export function Chat({
         body: () => ({
           selectedChatModel: selectedModelIdRef.current,
           useKnowledgeBase: useKnowledgeBaseRef.current,
+          useFolderTools: useFolderToolsRef.current,
         }),
       }),
     []
@@ -140,10 +149,12 @@ export function Chat({
               onKnowledgeBaseChange={setUseKnowledgeBase}
               onModelChange={setSelectedModelId}
               onSubmit={handleSubmit}
+              onFolderToolsChange={setUseFolderTools}
               selectedModelId={selectedModelId}
               setInput={setInput}
               status={status}
               stop={stop}
+              useFolderTools={useFolderTools}
               useKnowledgeBase={useKnowledgeBase}
             />
           </div>
@@ -156,10 +167,12 @@ export function Chat({
             onKnowledgeBaseChange={setUseKnowledgeBase}
             onModelChange={setSelectedModelId}
             onSubmit={handleSubmit}
+            onFolderToolsChange={setUseFolderTools}
             selectedModelId={selectedModelId}
             setInput={setInput}
             status={status}
             stop={stop}
+            useFolderTools={useFolderTools}
             useKnowledgeBase={useKnowledgeBase}
           />
         </>

@@ -16,6 +16,7 @@ export async function GET() {
     .select({
       id: folder.id,
       name: folder.name,
+      description: folder.description,
       emoji: folder.emoji,
       sortOrder: folder.sortOrder,
     })
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
   }
 
   const emoji = typeof body.emoji === "string" ? body.emoji : "📁"
+  const description =
+    typeof body.description === "string" ? body.description.trim().slice(0, 200) || null : null
 
   // 获取当前最大 sortOrder
   const [max] = await db
@@ -65,12 +68,14 @@ export async function POST(request: Request) {
       id: nanoid(),
       userId: session.user.id,
       name,
+      description,
       emoji,
       sortOrder: (max?.maxOrder ?? -1) + 1,
     })
     .returning({
       id: folder.id,
       name: folder.name,
+      description: folder.description,
       emoji: folder.emoji,
       sortOrder: folder.sortOrder,
     })

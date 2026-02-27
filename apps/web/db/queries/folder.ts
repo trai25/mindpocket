@@ -7,6 +7,7 @@ export async function getFolderById({ id, userId }: { id: string; userId: string
     .select({
       id: folder.id,
       name: folder.name,
+      description: folder.description,
       emoji: folder.emoji,
     })
     .from(folder)

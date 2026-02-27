@@ -1,7 +1,7 @@
 "use client"
 
 import type { ChatStatus } from "ai"
-import { BookOpen } from "lucide-react"
+import { BookOpen, FolderTree } from "lucide-react"
 import {
   Attachment,
   AttachmentPreview,
@@ -57,6 +57,8 @@ export function ChatInput({
   onModelChange,
   useKnowledgeBase,
   onKnowledgeBaseChange,
+  useFolderTools,
+  onFolderToolsChange,
 }: {
   input: string
   setInput: (value: string) => void
@@ -67,6 +69,8 @@ export function ChatInput({
   onModelChange: (modelId: string) => void
   useKnowledgeBase: boolean
   onKnowledgeBaseChange: (value: boolean) => void
+  useFolderTools: boolean
+  onFolderToolsChange: (value: boolean) => void
 }) {
   return (
     <div className="w-full px-4 pb-4">
@@ -88,6 +92,15 @@ export function ChatInput({
               </PromptInputActionMenuContent>
             </PromptInputActionMenu>
             <ChatModelSelector onModelChange={onModelChange} selectedModelId={selectedModelId} />
+            <PromptInputButton
+              className={useFolderTools ? "bg-primary/10 text-primary" : ""}
+              onClick={() => onFolderToolsChange(!useFolderTools)}
+              size="sm"
+              tooltip="文件夹工具"
+            >
+              <FolderTree className="size-4" />
+              <span className="text-xs">文件夹工具</span>
+            </PromptInputButton>
             <PromptInputButton
               className={useKnowledgeBase ? "bg-primary/10 text-primary" : ""}
               onClick={() => onKnowledgeBaseChange(!useKnowledgeBase)}

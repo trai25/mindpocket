@@ -1,6 +1,7 @@
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { resolveFolderForIngest } from "@/lib/ingest/auto-folder"
 import { ingestFromExtension, ingestFromFile, ingestFromUrl } from "@/lib/ingest/pipeline"
 import { ingestExtensionSchema, ingestUrlSchema } from "@/lib/ingest/types"
 
@@ -66,13 +67,20 @@ async function handleJsonIngest(request: Request, userId: string) {
       )
     }
 
-    // TODO: AI 自动 folder
+    const resolvedFolderId =
+      parsed.data.folderId ??
+      (await resolveFolderForIngest({
+        userId,
+        sourceType: "extension",
+        url: parsed.data.url,
+        title: parsed.data.title,
+      }))
 
     const result = await ingestFromExtension({
       userId,
       url: parsed.data.url,
       html: parsed.data.html,
-      folderId: parsed.data.folderId,
+      folderId: resolvedFolderId ?? undefined,
       title: parsed.data.title,
       clientSource: parsed.data.clientSource,
     })
@@ -87,10 +95,19 @@ async function handleJsonIngest(request: Request, userId: string) {
       { status: 400 }
     )
   }
+  const resolvedFolderId =
+    parsed.data.folderId ??
+    (await resolveFolderForIngest({
+      userId,
+      sourceType: "url",
+      url: parsed.data.url,
+      title: parsed.data.title,
+    }))
+
   const result = await ingestFromUrl({
     userId,
     url: parsed.data.url,
-    folderId: parsed.data.folderId,
+    folderId: resolvedFolderId ?? undefined,
     title: parsed.data.title,
     clientSource: parsed.data.clientSource,
   })
@@ -100,7 +117,9 @@ async function handleJsonIngest(request: Request, userId: string) {
 async function handleFileUpload(request: Request, userId: string) {
   const formData = await request.formData()
   const file = formData.get("file") as File | null
-  const folderId = formData.get("folderId") as string | null
+  const rawFolderId = formData.get("folderId")
+  const folderId =
+    typeof rawFolderId === "string" && rawFolderId.trim().length > 0 ? rawFolderId.trim() : null
   const title = formData.get("title") as string | null
   const clientSource = formData.get("clientSource") as string | null
 
@@ -121,10 +140,19 @@ async function handleFileUpload(request: Request, userId: string) {
     return NextResponse.json({ error: `Unsupported file type: ${ext}` }, { status: 400 })
   }
 
+  const resolvedFolderId =
+    folderId ??
+    (await resolveFolderForIngest({
+      userId,
+      sourceType: "file",
+      title: title ?? undefined,
+      fileName: file.name,
+    }))
+
   const result = await ingestFromFile({
     userId,
     file,
-    folderId: folderId ?? undefined,
+    folderId: resolvedFolderId ?? undefined,
     title: title ?? undefined,
     clientSource,
   })

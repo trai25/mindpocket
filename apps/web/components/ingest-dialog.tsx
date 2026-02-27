@@ -46,7 +46,7 @@ const ACCEPT_TYPES = [
 ].join(",")
 
 interface IngestDialogProps {
-  folders?: Array<{ id: string; name: string; emoji: string }>
+  folders?: Array<{ id: string; name: string; description?: string | null; emoji: string }>
   onSuccess?: () => void
   trigger?: React.ReactNode
 }

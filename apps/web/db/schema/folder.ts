@@ -11,6 +11,7 @@ export const folder = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    description: text("description"),
     emoji: text("emoji").notNull().default("📁"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -32,6 +32,7 @@ export interface ChatItem {
 export interface FolderItem {
   id: string
   name: string
+  description?: string | null
   emoji: string
   sortOrder: number
   items: BookmarkItemInFolder[]

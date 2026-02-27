@@ -15,12 +15,14 @@ interface ChatState {
   lastFetch: number | null
   selectedModelId: string
   useKnowledgeBase: boolean
+  useFolderTools: boolean
 
   // Actions
   fetchChats: (force?: boolean) => Promise<void>
   deleteChat: (chatId: string) => void
   setSelectedModelId: (modelId: string) => void
   setUseKnowledgeBase: (use: boolean) => void
+  setUseFolderTools: (use: boolean) => void
   reset: () => void
 }
 
@@ -32,6 +34,7 @@ const initialState = {
   lastFetch: null,
   selectedModelId: "",
   useKnowledgeBase: true,
+  useFolderTools: true,
 }
 
 export const useChatStore = create<ChatState>()(
@@ -79,6 +82,7 @@ export const useChatStore = create<ChatState>()(
         setSelectedModelId: (modelId) => set({ selectedModelId: modelId }),
 
         setUseKnowledgeBase: (use) => set({ useKnowledgeBase: use }),
+        setUseFolderTools: (use) => set({ useFolderTools: use }),
 
         reset: () => set(initialState),
       }),
@@ -87,6 +91,7 @@ export const useChatStore = create<ChatState>()(
           ({
             selectedModelId: state.selectedModelId,
             useKnowledgeBase: state.useKnowledgeBase,
+            useFolderTools: state.useFolderTools,
           }) as ChatState,
       })
     ),

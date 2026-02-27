@@ -23,7 +23,7 @@ export type IngestStatus = (typeof INGEST_STATUSES)[number]
 
 export const ingestUrlSchema = z.object({
   url: z.string().url(),
-  folderId: z.string().optional(),
+  folderId: z.string().trim().min(1).optional(),
   title: z.string().optional(),
   clientSource: z.enum(CLIENT_SOURCES),
 })
@@ -32,7 +32,7 @@ export const ingestExtensionSchema = z.object({
   url: z.string().url(),
   html: z.string().min(1).optional(),
   title: z.string().optional(),
-  folderId: z.string().optional(),
+  folderId: z.string().trim().min(1).optional(),
   clientSource: z.enum(CLIENT_SOURCES),
 })
 

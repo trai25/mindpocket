@@ -70,6 +70,7 @@ function getSourceLabel(item: HistoryItem, t: ReturnType<typeof useT>) {
 interface FolderInfo {
   id: string
   name: string
+  description?: string | null
   emoji: string
 }
 
